@@ -10,7 +10,7 @@
 import json
 
 INFILE = '../data/games.csv'
-OUTFILE = '../data/data.json'
+OUTFILE = '../data/games.json'
 
 # Creates games object containing all the games
 def create_data():

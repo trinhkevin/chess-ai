@@ -7,9 +7,17 @@
 	03/20/2018
 '''
 
-DATAFILE = '../data/data.json'
+DATAFILE = '../data/games.json'
 
 import json
+import chessboard
 
 if __name__ == '__main__':
-	games = json.load(open(DATAFILE))
+  games = json.load(open(DATAFILE))
+  c = chessboard.Chessboard()
+  print(c)
+  for move in games[1]["moves"]:
+    c.move(move)
+    print(c)
+    print()
+
