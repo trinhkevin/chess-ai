@@ -14,7 +14,9 @@ We are using unsupervised learning to allow Chess-AI to continually update the p
 
 ## How to Run ##
 
-## Dependencies ##
+## Python Libraries Used ##
+* python-chess
+* bitarray
 
 * [python-chess](https://pypi.python.org/pypi/python-chess) `pip3 install python-chess`
 * [scikit-learn](http://scikit-learn.org/stable/install.html)
