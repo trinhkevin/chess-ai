@@ -9,12 +9,12 @@
 
 DATAFILE = '../data/games.json'
 C = 1.41
+ITERATIONS = 1000
 
 import json
 import chessboard
 import math
 import random
-import copy 
 
 class StateNode:
   def __init__(self, board, move=None):
@@ -98,13 +98,12 @@ def UCB(v, N, ni):
   return v + C * math.sqrt(math.log(N)/ni)
 
 def monte_carlo(board):
-  #select
-
-  #expand
-
-  #simulate
-
-  #backup
+  root = StateNode(board)
+  i = 0
+  while i < ITERATIONS:
+    MCTS(root)
+    i = i + 1
+  return root.bestChild()
 
 def MCTS(state):
   state.visits = state.visits + 1
@@ -125,11 +124,6 @@ def MCTS(state):
   return winner
 
 if __name__ == '__main__':
-  games = json.load(open(DATAFILE))
+  #games = json.load(open(DATAFILE))
   c = chessboard.Chessboard()
-  print(c)
-  print()
-  for move in games[1]["moves"]:
-    c.move(move)
-    print(c)
-    print()
+  print(c.monte_carlo())
