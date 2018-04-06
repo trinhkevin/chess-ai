@@ -19,13 +19,14 @@ import chess.png
 '''
 951 total bits (neurons):
 
-p1piece: 8x8x6
-p2piece: 8x8x6
-repetitions: 8x8x2
-turn: 1
-p1 castling: 2
-p2 castling: 2
-no-progress: 50
+data : size
+
+p1piece : 8x8x6
+p2piece : 8x8x6
+turn : 1
+p1_castling : 2
+p2_castling : 2
+no_progress : 100 (half moves)
 '''
 
 class Chessboard(object):
@@ -86,12 +87,6 @@ class Chessboard(object):
         else:
             self.netinputs[index] = 0
         index = index + 1
-
-    # Skipping repetitions
-    for i in range(128):
-      self.inputs[index + i] = False
-
-    index += 128
     
     # Turn (White = 1, Black = 0)
     self.inputs[index] = self.board.turn
@@ -110,11 +105,11 @@ class Chessboard(object):
     index += 1
     
     # Turns since last capture or pawn move
-    for i in range(0, 50):
+    for i in range(0, 100):
       if i == self.board.halfmove_clock:
-        inputs[index] = 1;
+        inputs[index + i] = 1;
       else:
-        inputs[index] = 0;
+        inputs[index + i] = 0;
 
 if __name__ == '__main__':
   c = Chessboard()
@@ -125,3 +120,8 @@ if __name__ == '__main__':
   c.move("Bc4")
   c.move("Nf6")
   c.move("Qxf7")
+
+  print(len(c.board.legal_moves))
+
+  for i in c.board.legal_moves:
+    print(i)

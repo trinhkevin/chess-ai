@@ -22,15 +22,38 @@ class stateNode:
     self.terminalValue = 0
     self.terminal = False
     self.turn = 0
+
   def createChildren(self):
-    ###
-  def bestChild(self):
-    ###
+    
+
+  def getBestChild(self):
+    # If there are no possible children,
+    # set the node terminal and give it a value
+    if(len(children) == 0):
+      self.terminal = True
+      if self.board.is_stalemate():
+        self.terminalValue = 0
+      else:
+        # White's turn, so white lost
+        if self.board.turn:
+          self.terminalValue = 0
+        # Black's turn, so black lost
+        else:
+          self.terminalValue = 1
+      return None
+
+    # Else, find the best child
+    bestChild = None
+    for child in children:
+      if bestChild is None or child > bestChild:
+        bestChild = child;
+    return bestChild
+
   def UCB_sample(self):
-    ###
+    pass
+
   def playout(self):
-
-
+    pass
 
 
 def monte_carlo(board):
