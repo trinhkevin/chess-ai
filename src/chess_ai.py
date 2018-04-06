@@ -8,9 +8,15 @@
 '''
 
 DATAFILE = '../data/games.json'
+C = 1.41
+
 
 import json
 import chessboard
+import math
+
+
+
 
 class StateNode:
   def __init__(self, board):
@@ -32,14 +38,14 @@ class StateNode:
   def getBestChild(self):
     # If there are no possible children,
     # set the node terminal and give it a value
-    if len(children) == 0:
+    if len(self.children) == 0:
       self.terminal = True
       if self.board.is_stalemate():
         self.terminalValue = 0
       else:
         # White's turn, so white lost
         if self.board.getTurn():
-          self.terminalValue = 0
+          self.terminalValue = -1
         # Black's turn, so black lost
         else:
           self.terminalValue = 1
@@ -53,13 +59,24 @@ class StateNode:
     return bestChild
 
   def UCB_sample(self):
-    pass
+    result = None
+    resultUCB = -1
+    for child in self.children:
+      candidateUCB = UCB(child.value, self.visits, child.visits)
+      if result is None or candidateUCB > resultUCB:
+        result = child
+        resultUCB = candidateUCB
+    return result
 
   def playout(self):
     pass
+
   def update_value(self, winner):
     pass
 
+
+def UCB(v, N, ni):
+  return v + C * math.sqrt(math.log(N)/ni)
 
 def monte_carlo(board):
   #select
