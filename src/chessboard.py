@@ -8,27 +8,30 @@
 '''
 
 import chess
+import copy
 from bitarray import bitarray
 
 '''
 will use this later for visual representation of board
-import chess.pgn
+import chess.png
 '''
 
-#p1piece -> 8x8x6
-#p2piece -> ''
-#repetitions -> 8x8x2
-#turn -> 1
-#p1 castling -> 2
-#p2 castling -> 2
-#no-progress -> 50
+'''
+951 total bits (neurons):
 
-#951 total bits (neurons)
+p1piece: 8x8x6
+p2piece: 8x8x6
+repetitions: 8x8x2
+turn: 1
+p1 castling: 2
+p2 castling: 2
+no-progress: 50
+'''
 
 class Chessboard(object):
   def __init__(self):
     self.board = chess.Board()
-    self.netinputs = bitarray(951)
+    self.inputs = bitarray(951)
     
   def __str__(self):
     return str(self.board)
@@ -48,9 +51,6 @@ class Chessboard(object):
   def check(self):
     return self.board.is_check()
 
-  def getNetInputs(self):
-    return self.netinputs
-
   def turns(self):
     s = []
     while True:
@@ -66,39 +66,56 @@ class Chessboard(object):
       self.board.push(move)
     return t
 
-  def genInputBits(self):
+  def getNetworkInput(self):
     index = 0
-    for p in ['P', 'R' , 'N' ,'B', 'Q' ,'K', 'p' , 'r' , 'n' , 'b' , 'q' ,'k']:
-      for i in range(64):
-        if(self.board.piece_at(i) and self.board.piece_at(i).symbol() == p):
-          self.netinputs[index] = True
-        else:
-          self.netinputs[index] = False
-        index += 1
-   
-    for i in range(128):
-      self.netinputs[index + i] = False
 
-    index += 128 # skipping repetitions for now
+    # White pieces
+    for p in ['P', 'R' , 'N' ,'B', 'Q' ,'K']:
+      for i in range(0,64):
+          if(self.board.piece_at(i) and self.board.piece_at(i).symbol() == p):
+              self.netinputs[index] = 1
+          else:
+              self.netinputs[index] = 0
+          index = index + 1
+
+    # Black pieces
+    for p in ['p' , 'r' , 'n' , 'b' , 'q' ,'k']:
+      for i in range(0,64):
+        if(self.board.piece_at(i) and self.board.piece_at(i).symbol() == p):
+            self.netinputs[index] = 1
+        else:
+            self.netinputs[index] = 0
+        index = index + 1
+
+    # Skipping repetitions
+    for i in range(128):
+      self.inputs[index + i] = False
+
+    index += 128
     
-    self.netinputs[index] = self.board.turn
+    # Turn (White = 1, Black = 0)
+    self.inputs[index] = self.board.turn
     index += 1
-    self.netinputs[index] = self.board.has_kingside_castling_rights(chess.WHITE)
+
+    # White castling
+    self.inputs[index] = self.board.has_kingside_castling_rights(chess.WHITE)
     index += 1
-    self.netinputs[index] = self.board.has_queenside_castling_rights(chess.WHITE)
+    self.inputs[index] = self.board.has_queenside_castling_rights(chess.WHITE)
     index += 1
-    self.netinputs[index] = self.board.has_kingside_castling_rights(chess.BLACK)
+
+    # Black castling
+    self.inputs[index] = self.board.has_kingside_castling_rights(chess.BLACK)
     index += 1
-    self.netinputs[index] = self.board.has_queenside_castling_rights(chess.BLACK)
-    index += 1
-    # check this
-    self.netinputs[index] = self.board.can_claim_fifty_moves()
+    self.inputs[index] = self.board.has_queenside_castling_rights(chess.BLACK)
     index += 1
     
-    for i in range(50):
-      self.netinputs[index + i] = 0
-      #somehow figure this out?
-    
+    # Turns since last capture or pawn move
+    for i in range(0, 50):
+      if i == self.board.halfmove_clock:
+        inputs[index] = 1;
+        continue;
+      inputs[index] = 0;
+
 if __name__ == '__main__':
   c = Chessboard()
   c.move("e4")
@@ -108,11 +125,3 @@ if __name__ == '__main__':
   c.move("Bc4")
   c.move("Nf6")
   c.move("Qxf7")
-  for i in c.turns():
-    print(i)
-
-  '''
-  c.geninputbits()
-  print(c)
-  print(c.getinputbits())
-  '''
