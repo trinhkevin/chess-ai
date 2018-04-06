@@ -9,7 +9,7 @@
 
 DATAFILE = '../data/games.json'
 C = 1.41
-ITERATIONS = 5000
+ITERATIONS = 500
 
 import json
 import chessboard
@@ -29,15 +29,9 @@ class StateNode:
     self.move = move
 
   def createChildren(self):
-    childCreated = False
-    for move in self.board.getLegalMoves():
-      childCreated = True
-      board = copy.deepcopy(self.board)
-      board.move_uci(move)
-      child = StateNode(board, move)
-      self.children.add(child)
-    if not childCreated:
-      if self.board.is_stalemate():
+    if not self.board.getLegalMoves().count():
+      self.terminal = True
+      if self.board.stalemate():
         self.terminalValue = 0
       else:
         # White's turn, so white lost
@@ -46,8 +40,16 @@ class StateNode:
         # Black's turn, so black lost
         else:
           self.terminalValue = 1
+      return
 
+    for move in self.board.getLegalMoves():
+      board = copy.deepcopy(self.board)
+      board.move_uci(move)
+      child = StateNode(board, move)
+      self.children.add(child)
+   
   def getBestChild(self):
+    '''
     # If there are no possible children,
     # set the node terminal and give it a value
     if len(self.children) == 0:
@@ -62,6 +64,7 @@ class StateNode:
         else:
           self.terminalValue = 1
       return None
+    '''
 
     # Else, find the best child
     bestChild = None
@@ -72,7 +75,7 @@ class StateNode:
 
   def UCB_sample(self):
     result = None
-    resultUCB = -1
+    resultUCB = None
     for child in self.children:
       candidateUCB = UCB(child.value, self.visits, child.visits)
       if result is None or candidateUCB > resultUCB:
@@ -86,14 +89,20 @@ class StateNode:
     testBoard = self.board.copy()
     terminal = False
     while not terminal:
-      moveIndex = random.randint(0, len(self.children))
+      
+      legalMoves = [x for x in testBoard.legal_moves]
+      move = legalMoves[random.randint(0, len(legalMoves) - 1)]
+
+      '''   
+      moveIndex = random.randint(0, - 1)
       index = 0
       move = None
-      for legalMove in self.board.getLegalMoves():
+      for legalMove in testBoard.legal_moves:
         if index == moveIndex:
           move = legalMove
           break
         index += 1
+      '''
       testBoard.push(move)
       if testBoard.is_game_over() or testBoard.is_stalemate():
         terminal = True
@@ -121,12 +130,18 @@ def monteCarlo(chessboard):
   root = StateNode(chessboard)
   for i in range(ITERATIONS):
     MCTS(root)
+  '''
+  curr = root
+  while len(curr.children):
+    print(curr.getBestChild().move)
+    curr = curr.getBestChild()
   return root.getBestChild()
+  '''
 
 def MCTS(state):
-  state.visits = state.visits + 1
   if state.terminal:
-    return
+    return state.terminalValue
+  state.visits += 1
   if len(state.children) == 0:
     state.createChildren()
   for child in state.children:
@@ -143,6 +158,7 @@ def MCTS(state):
 
 if __name__ == '__main__':
   c = chessboard.Chessboard()
+  print(type(c.board.legal_moves))
   for i in range(0, 10):
     print(c)
     print()
