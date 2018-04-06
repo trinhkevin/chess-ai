@@ -22,22 +22,6 @@ def create_data():
       c = chessboard.Chessboard()
       for move in line[12].split(" "):
         c.move(move)
-      '''
-			game["victory_status"] = line[5]
-			# 0 = white, 1 = black, 2 = draw
-			if line[6] == "white":
-				game["winner"] = 0
-			elif line[7] == "black":
-				game["winner"] = 1
-			else:
-				game["winner"] = 2
-			moves = []
-			for move in line[12].split(" "):
-				moves.append(move)
-			game["moves"] = moves
-			game["opening_eco"] = line[13]
-			games.append(game)
-      '''
       games.append(c)
   return games
 
