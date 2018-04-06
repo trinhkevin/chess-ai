@@ -72,7 +72,10 @@ class StateNode:
     pass
 
   def update_value(self, winner):
-    pass
+    if (winner == self.turn):
+      self.value = self.value + 1
+    else:
+      self.value = self.value - 1
 
 
 def UCB(v, N, ni):
