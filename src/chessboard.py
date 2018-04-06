@@ -37,13 +37,16 @@ class Chessboard(object):
   def __str__(self):
     return str(self.board)
 
+  def move_uci(self, _move):
+    self.board.push(_move)
+
   def move(self, _move):
     self.board.push_san(_move)
 
   def checkmate(self):
     return self.board.is_game_over()
 
-  def stalemate(self):
+  def is_stalemate(self):
     return self.board.is_stalemate()
 
   def draw(self):
@@ -51,6 +54,9 @@ class Chessboard(object):
 
   def check(self):
     return self.board.is_check()
+
+  def getTurn(self):
+    return self.board.turn
 
   def turns(self):
     s = []
@@ -119,9 +125,6 @@ if __name__ == '__main__':
   c.move("Nc6")
   c.move("Bc4")
   c.move("Nf6")
-  c.move("Qxf7")
-
-  print(len(c.board.legal_moves))
 
   for i in c.board.legal_moves:
-    print(i)
+    print(str(i))

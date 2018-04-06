@@ -12,8 +12,7 @@ DATAFILE = '../data/games.json'
 import json
 import chessboard
 
-
-class stateNode:
+class StateNode:
   def __init__(self, board):
     self.visits = 0
     self.value = 0
@@ -24,18 +23,22 @@ class stateNode:
     self.turn = 0
 
   def createChildren(self):
-    
+    for move in self.board.legal_moves:
+      board = chessboard.Board()
+      board.move_uci(move)
+      child = StateNode(board)
+      self.children.add(child)
 
   def getBestChild(self):
     # If there are no possible children,
     # set the node terminal and give it a value
-    if(len(children) == 0):
+    if len(children) == 0:
       self.terminal = True
       if self.board.is_stalemate():
         self.terminalValue = 0
       else:
         # White's turn, so white lost
-        if self.board.turn:
+        if self.board.getTurn():
           self.terminalValue = 0
         # Black's turn, so black lost
         else:
