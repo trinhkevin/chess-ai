@@ -32,13 +32,13 @@ no_progress : 100 (half moves)
 class Chessboard(object):
   def __init__(self):
     self.board  = chess.Board()
-    self.inputs = bitarray(951)
+    self.inputs = bitarray(950)
     
   def __str__(self):
     return str(self.board)
 
   def move_uci(self, _move):
-    self.board.push(_move)
+    self.board.push(chess.Move.from_uci(_move))
 
   def move(self, _move):
     self.board.push_san(_move)
@@ -82,27 +82,41 @@ class Chessboard(object):
   def networkInput(self):
     index = 0
 
-    # White pieces
-    for p in ['P', 'R' , 'N' ,'B', 'Q' ,'K']:
-      for i in range(0,64):
-          if(self.board.piece_at(i) and self.board.piece_at(i).symbol() == p):
-              self.netinputs[index] = 1
-          else:
-              self.netinputs[index] = 0
-          index = index + 1
+    if(self.board.turn):
+      # White pieces
+      for p in ['P', 'R' , 'N' ,'B', 'Q' ,'K']:
+        for i in range(0,64):
+            if(self.board.piece_at(i) and self.board.piece_at(i).symbol() == p):
+                self.inputs[index] = 1
+            else:
+                self.inputs[index] = 0
+            index = index + 1
 
-    # Black pieces
-    for p in ['p' , 'r' , 'n' , 'b' , 'q' ,'k']:
-      for i in range(0,64):
-        if(self.board.piece_at(i) and self.board.piece_at(i).symbol() == p):
-            self.netinputs[index] = 1
-        else:
-            self.netinputs[index] = 0
-        index = index + 1
-    
-    # Turn (White = 1, Black = 0)
-    self.inputs[index] = self.board.turn
-    index += 1
+      # Black pieces
+      for p in ['p' , 'r' , 'n' , 'b' , 'q' ,'k']:
+        for i in range(0,64):
+          if(self.board.piece_at(i) and self.board.piece_at(i).symbol() == p):
+              self.inputs[index] = 1
+          else:
+              self.inputs[index] = 0
+          index = index + 1
+    else:
+      # Black pieces
+      for p in ['p' , 'r' , 'n' , 'b' , 'q' ,'k']:
+        for i in range(0,64):
+          if(self.board.piece_at(i) and self.board.piece_at(i).symbol() == p):
+              self.inputs[index] = 1
+          else:
+              self.inputs[index] = 0
+          index = index + 1
+      # White pieces
+      for p in ['P', 'R' , 'N' ,'B', 'Q' ,'K']:
+        for i in range(0,64):
+          if(self.board.piece_at(i) and self.board.piece_at(i).symbol() == p):
+              self.inputs[index] = 1
+          else:
+              self.inputs[index] = 0
+          index = index + 1
 
     # White castling
     self.inputs[index] = self.board.has_kingside_castling_rights(chess.WHITE)
@@ -119,9 +133,9 @@ class Chessboard(object):
     # Turns since last capture or pawn move
     for i in range(0, 100):
       if i == self.board.halfmove_clock:
-        inputs[index + i] = 1;
+        self.inputs[index + i] = 1;
       else:
-        inputs[index + i] = 0;
+        self.inputs[index + i] = 0;
 
 if __name__ == '__main__':
   c = Chessboard()
