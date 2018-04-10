@@ -102,7 +102,7 @@ class StateNode:
     # Else, find the best child
     bestChild = None
     for child in self.children:
-      if bestChild is None or child.value/child.visits > bestChild.value/bestChild.visits:
+      if bestChild is None or child.value / child.visits > bestChild.value / bestChild.visits:
         bestChild = child;
     return bestChild
 
@@ -143,6 +143,11 @@ class StateNode:
         index += 1
       '''
       testBoard.push(move)
+    if testBoard.is_stalemate():
+      return 0
+    elif testBoard.is_game_over():
+      return -1 if testBoard.turn else 1
+    return 0
     if testBoard.result() == '1/2-1/2':
       return 0
     else:
@@ -167,8 +172,11 @@ class StateNode:
 def UCB(v, N, n_i):
   return v + C * math.sqrt(math.log(N)/n_i)
 
-
-  
+def monteCarlo(chessboard):
+  root = StateNode(chessboard)
+  for i in range(ITERATIONS):
+    MCTS(root)
+  return root.getBestChild()
 
 def MCTS(state):
   if state.isTerminal():
@@ -243,3 +251,4 @@ if __name__ == '__main__':
   ai = AI(c)
   for i in range(0, 100):
     print(ai.monteCarlo().move)'''
+
