@@ -17,11 +17,19 @@ DATAFILE = '../data/games.json'
 C = 1.41
 ITERATIONS = 500
 
+from sklearn.neural_network import MLPClassifier
 import json
 import chessboard
 import math
 import random
 import copy
+import chess
+
+
+
+
+
+clf = MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(951, 951), random_state=1, verbose = True)
 
 
 class AI:
@@ -30,6 +38,8 @@ class AI:
 
   def monteCarlo(self):
     for i in range(ITERATIONS):
+      for j in range(0,20):
+        print("*") 
       MCTS(self.tree)
     '''
     curr = root
@@ -67,7 +77,7 @@ class StateNode:
 
     for move in self.board.getLegalMoves():
       board = copy.deepcopy(self.board)
-      board.move_uci(move)
+      board.board.push(move)
       child = StateNode(board, move)
       self.children.add(child)
    
@@ -109,9 +119,18 @@ class StateNode:
   def playout(self):
     testBoard = self.board.copy()
     while testBoard.result() == '*':
-      
-      legalMoves = [x for x in testBoard.legal_moves]
-      move = legalMoves[random.randint(0, len(legalMoves) - 1)]
+      captures = list()
+      legalMoves = list()
+      for move in testBoard.legal_moves:
+        if(testBoard.is_capture(move)):
+          captures.append(move)
+        else:
+          legalMoves.append(move)
+
+      if(len(captures)):
+        move = captures[random.randint(0, len(captures) - 1)]
+      else:
+        move = legalMoves[random.randint(0, len(legalMoves) - 1)]
 
       '''   
       moveIndex = random.randint(0, - 1)
@@ -130,14 +149,20 @@ class StateNode:
       return -1 if testBoard.result() == '0-1' else 1
 
   def updateValue(self, winner):
+    value = 0
+    
     if winner == 0:
-      self.value += 0.5
+      value = 0.5
     if self.turn:
       if winner == 1:
-        self.value += 1
+        value = 1
     else:
       if winner == -1:
-        self.value +=1
+        value =1
+    self.value += value
+    self.board.networkInput()
+    clf.fit([self.board.inputs] , [value * 2])
+
 
 def UCB(v, N, n_i):
   return v + C * math.sqrt(math.log(N)/n_i)
@@ -164,13 +189,57 @@ def MCTS(state):
   state.updateValue(winner)
   return winner
 
+
+def playoutRepeat(board):
+  wwins = 0.
+  plays = 0.
+  for i in range(0, 1000):
+    print(i)
+    testBoard = board.copy()
+    while testBoard.result() == '*':
+      captures = list()
+      legalMoves = list()
+      for move in testBoard.legal_moves:
+        if(testBoard.is_capture(move)):
+          captures.append(move)
+        else:
+          legalMoves.append(move)
+
+      if(len(captures)):
+        move = captures[random.randint(0, len(captures) - 1)]
+      else:
+        move = legalMoves[random.randint(0, len(legalMoves) - 1)]
+
+      testBoard.push(move)
+
+
+    if testBoard.result() == '1/2-1/2':
+      wwins = wwins + 0.5
+    else:
+      wwins = wwins + (0 if testBoard.result() == '0-1' else 1)
+
+    print(testBoard.result())
+    print(testBoard.fen())
+    plays = plays + 1
+  return (wwins/plays)
+
+
+
 if __name__ == '__main__':
   c = chessboard.Chessboard()
-  c.move('g2g4')
-  c.move('a7a6')
-  c.move('c2c4')
-  c.move('e7e6')
-  c.move('f2f4')
+  c.move_uci("e2e4")
+  c.move_uci("d7d5")
+  c.move_uci("e4d5")
+  c.move_uci("d8d5")
+  c.move_uci("b1c3")
+  c.move_uci("e8d7")
+  c.move_uci("c3d5")
+  print(c.board.fen())
+  c.board.pop()
+  print(c.board.fen())
+  #print(playoutRepeat(c))
+
+  '''c = chessboard.Chessboard()
   ai = AI(c)
   for i in range(0, 100):
-    print(ai.monteCarlo().move)
+    print(ai.monteCarlo().move)'''
