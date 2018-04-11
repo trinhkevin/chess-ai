@@ -36,9 +36,11 @@ def load_data():
     return pickle.load(file)
 
 # Main Execution
+'''
 if __name__ == '__main__':
   
   games = create_data()
   write_data(games)
 
   print(load_data())
+  '''

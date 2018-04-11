@@ -137,6 +137,7 @@ class Chessboard(object):
       else:
         self.inputs[index + i] = 0;
 
+'''
 if __name__ == '__main__':
   c = Chessboard()
   c.move("e4")
@@ -148,3 +149,4 @@ if __name__ == '__main__':
 
   for i in c.board.legal_moves:
     print(str(i))
+    '''

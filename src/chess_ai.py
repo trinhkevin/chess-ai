@@ -233,6 +233,7 @@ def playoutRepeat(board):
 
 
 
+
 if __name__ == '__main__':
   c = chessboard.Chessboard()
   c.move_uci("e2e4")
