@@ -9,6 +9,7 @@ import chessboard
 import chess
 
 import pickle
+import warnings
 
 def square_value(square):
 	return ord(square[0]) - ord('a') + (int(square[1]) - 1) * 8
@@ -54,7 +55,7 @@ def encode_move(move):
 			i2 = 64
 	else:
 		if(move[4] == 'b' or move[4] == 'B'):
-			i2 = 64 + diff - 6
+			i2 = 64 +  diff - 6
 		elif(move[4] == 'n' or move[4] == 'N'):
 			i2 = 67 + diff - 6 
 		elif(move[4] == 'r' or move[4] == 'R'):
@@ -111,8 +112,35 @@ def decode_move(move):
 
 	return square_string(startval) + square_string(destval) + suffix
 
-if __name__ == "__main__":
-	clf = MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(950, 950, 950), random_state=1, verbose = True)
+
+def train():
+	warnings.filterwarnings(action='ignore', category=DeprecationWarning)
+	clf = MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(900,100), random_state=1, verbose = 0)
+	inputs = None
+	classes = None
+	with open('netinputs.pkl' , 'rb') as file:
+	  inputs = pickle.load(file)
+	with open('netclasses.pkl', 'rb') as file:
+	  classes = pickle.load(file)
+
+	if(len(inputs) != len(classes)):
+	  exit()
+	print("training")
+	first = True
+	for i in range(len(inputs)):
+	  if (i%1000 == 0):
+	    print("{}%".format(float(i) / len(inputs) * 100.))
+	  if first:
+	    clf.partial_fit([inputs[i]], [classes[i]], classes = range(1, 4673))
+	    first = False
+	  else:
+	    clf.partial_fit([inputs[i]], [classes[i]])
+
+	with open('network.pkl' , 'wb') as file:
+	  pickle.dump(clf, file)
+	
+
+def formatData():
 
 	try:
 		games = load_data()
@@ -143,3 +171,6 @@ if __name__ == "__main__":
 		pickle.dump(classification, file)
 
 	print("Files written")
+
+	
+

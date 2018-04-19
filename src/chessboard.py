@@ -17,13 +17,12 @@ import chess.png
 '''
 
 '''
-951 total bits (neurons):
+872 total bits (neurons):
 
 data : size
 
 p1piece : 8x8x6
 p2piece : 8x8x6
-turn : 1
 p1_castling : 2
 p2_castling : 2
 no_progress : 100 (half moves)
@@ -137,16 +136,12 @@ class Chessboard(object):
       else:
         self.inputs[index + i] = 0;
 
-'''
+
 if __name__ == '__main__':
   c = Chessboard()
-  c.move("e4")
-  c.move("e5")
-  c.move("Qh5")
-  c.move("Nc6")
-  c.move("Bc4")
-  c.move("Nf6")
+  
+  c.networkInput()
 
+  print(c.inputs)
   for i in c.board.legal_moves:
     print(str(i))
-    '''
