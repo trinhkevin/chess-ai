@@ -1,20 +1,18 @@
-
+#!/usr/bin/env python3
 
 from sklearn.neural_network import MLPClassifier
-
 from create_data import load_data
-
 import chessboard
-
 import chess
-
 import pickle
 import warnings
 
 def square_value(square):
 	return ord(square[0]) - ord('a') + (int(square[1]) - 1) * 8
+
 def square_string(value):
 	return str(chr(int(ord('a') + int(value) % 8))) + str(int(value/8 + 1))
+
 def encode_move(move):
 	i2 = 0
 	diff =  square_value(move[2:4]) - square_value(move[0:2]) 
@@ -112,7 +110,6 @@ def decode_move(move):
 
 	return square_string(startval) + square_string(destval) + suffix
 
-
 def train():
 	warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 	clf = MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(900,100), random_state=1, verbose = 0)
@@ -139,14 +136,11 @@ def train():
 	with open('network.pkl' , 'wb') as file:
 	  pickle.dump(clf, file)
 	
-
 def formatData():
-
 	try:
 		games = load_data()
 	except:
 		print("Couldn't load data")
-
 
 	print("Data loaded!")
 	inputs = list()
@@ -172,6 +166,5 @@ def formatData():
 
 	print("Files written")
 
-	
-
-train()
+if __name__ == '__main__':
+  train()

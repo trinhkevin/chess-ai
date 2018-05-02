@@ -38,7 +38,7 @@ def load_data():
 # Main Execution
 '''
 if __name__ == '__main__':
-  
+
   games = create_data()
   write_data(games)
 

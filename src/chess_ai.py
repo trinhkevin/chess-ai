@@ -1,21 +1,11 @@
 #!/usr/bin/env python3
 
-
-
-
 '''
 	Chess AI utilizing a neural network
 	Andrew Callahan, Anthony Luc, Kevin Trinh
 	Machine Learning
 	04/05/2018
 '''
-
-# https://python-chess.readthedocs.io/en/v0.23.0/core.html
-
-
-DATAFILE = '../data/games.json'
-C = 1.41
-ITERATIONS = 500
 
 from sklearn.neural_network import MLPClassifier
 import json
@@ -25,14 +15,14 @@ import random
 import copy
 import chess
 
-
-
-
+DATAFILE = '../data/games.json'
+C = 1.41
+ITERATIONS = 500
 
 clf = MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(951, 951), random_state=1, verbose = True)
 
-
 class AI:
+
   def __init__(self, board):
     self.tree =StateNode(board)
 
@@ -41,16 +31,14 @@ class AI:
       for j in range(0,20):
         print("*") 
       MCTS(self.tree)
-    '''
-    curr = root
-    while len(curr.children):
-      print(curr.getBestChild().move)
-      curr = curr.getBestChild()
-    '''
+
     result = self.tree.getBestChild()
     self.tree = result
+
     return self.tree
+
 class StateNode:
+
   def __init__(self, board, move=None):
     self.visits = 0
     self.value = 0
@@ -74,7 +62,6 @@ class StateNode:
       exit(1)
 
   def createChildren(self):
-
     for move in self.board.getLegalMoves():
       board = copy.deepcopy(self.board)
       board.board.push(move)
@@ -155,7 +142,6 @@ class StateNode:
 
   def updateValue(self, winner):
     value = 0
-    
     if winner == 0:
       value = 0.5
     if self.turn:
@@ -167,7 +153,6 @@ class StateNode:
     self.value += value
     self.board.networkInput()
     clf.fit([self.board.inputs] , [value * 2])
-
 
 def UCB(v, N, n_i):
   return v + C * math.sqrt(math.log(N)/n_i)
@@ -197,7 +182,6 @@ def MCTS(state):
   state.updateValue(winner)
   return winner
 
-
 def playoutRepeat(board):
   wwins = 0.
   plays = 0.
@@ -220,7 +204,6 @@ def playoutRepeat(board):
 
       testBoard.push(move)
 
-
     if testBoard.result() == '1/2-1/2':
       wwins = wwins + 0.5
     else:
@@ -230,9 +213,6 @@ def playoutRepeat(board):
     print(testBoard.fen())
     plays = plays + 1
   return (wwins/plays)
-
-
-
 
 if __name__ == '__main__':
   c = chessboard.Chessboard()
