@@ -136,6 +136,50 @@ def train():
 	with open('network.pkl' , 'wb') as file:
 	  pickle.dump(clf, file)
 	
+def train_value():
+	warnings.filterwarnings(action='ignore', category=DeprecationWarning)
+	clf = MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(900,450,100), random_state=1, verbose = 1)
+	inputs = None
+	classes = None
+	with open('netinputs.pkl' , 'rb') as file:
+	  inputs = pickle.load(file)
+	with open('netclasses.pkl', 'rb') as file:
+	  classes = pickle.load(file)
+
+	if(len(inputs) != len(classes)):
+	  exit()
+	print("training")
+
+	clf.fit(inputs, classes)
+	
+	with open('network_val.pkl' , 'wb') as file:
+	  pickle.dump(clf, file)
+	print("done!\n")
+
+def format_value():
+	try:
+		games = load_data()
+	except:
+		print("Couldn't load data")
+
+	print("Data loaded!")
+	inputs = list()
+	classification = list()
+
+	for game, result in games:
+		game.networkInput()
+		inputs.append( game.inputs )
+		classification.append(result)
+	print(inputs)
+	print(classification)
+
+	with open('netinputs.pkl', 'wb') as file:
+		pickle.dump(inputs, file)
+	with open('netclasses.pkl', 'wb') as file:
+		pickle.dump(classification, file)
+
+	print("Files written")
+
 def formatData():
 	try:
 		games = load_data()

@@ -13,23 +13,29 @@ import chessboard
 import math
 import random
 import copy
-import chess
+import chess # https://python-chess.readthedocs.io/en/v0.23.0/core.html
+import pickle
+from chess_network import *
 
 DATAFILE = '../data/games.json'
-C = 1.41
+C = 1
 ITERATIONS = 500
+clf = None
+val_clf = None
 
-clf = MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(951, 951), random_state=1, verbose = True)
+with open('network_val.pkl', 'rb') as file:
+  val_clf = pickle.load(file)
+with open('network.pkl' , 'rb') as file:
+  clf = pickle.load(file)
 
 class AI:
 
   def __init__(self, board):
-    self.tree =StateNode(board)
+    self.tree = StateNode(board)
 
   def monteCarlo(self):
     for i in range(ITERATIONS):
-      for j in range(0,20):
-        print("*") 
+      print(i)
       MCTS(self.tree)
 
     result = self.tree.getBestChild()
@@ -39,9 +45,9 @@ class AI:
 
 class StateNode:
 
-  def __init__(self, board, move=None):
+  def __init__(self, board, move=None,prob = 0):
     self.visits = 0
-    self.value = 0
+    self.value = prob * 50
     self.board = board
     self.children = set()
     self.turn = self.board.getTurn()
@@ -62,12 +68,12 @@ class StateNode:
       exit(1)
 
   def createChildren(self):
-    for move in self.board.getLegalMoves():
+    for m, k in get_network_move(self.board):
       board = copy.deepcopy(self.board)
-      board.board.push(move)
-      child = StateNode(board, move)
+      board.move_uci(m.uci())
+      child = StateNode(board, m, k)
       self.children.add(child)
-   
+
   def getBestChild(self):
     '''
     # If there are no possible children,
@@ -89,7 +95,7 @@ class StateNode:
     # Else, find the best child
     bestChild = None
     for child in self.children:
-      if bestChild is None or child.value / child.visits > bestChild.value / bestChild.visits:
+      if bestChild is None or child.value  > bestChild.value:
         bestChild = child;
     return bestChild
 
@@ -97,7 +103,7 @@ class StateNode:
     result = None
     resultUCB = None
     for child in self.children:
-      candidateUCB = UCB(child.value/child.visits, self.visits, child.visits)
+      candidateUCB = UCB(child.value, self.visits, child.visits)
       if result is None or candidateUCB > resultUCB:
         result = child
         resultUCB = candidateUCB
@@ -141,9 +147,9 @@ class StateNode:
       return -1 if testBoard.result() == '0-1' else 1
 
   def updateValue(self, winner):
-    value = 0
+    value = -1
     if winner == 0:
-      value = 0.5
+      value = 0
     if self.turn:
       if winner == 1:
         value = 1
@@ -151,8 +157,6 @@ class StateNode:
       if winner == -1:
         value =1
     self.value += value
-    self.board.networkInput()
-    clf.fit([self.board.inputs] , [value * 2])
 
 def UCB(v, N, n_i):
   return v + C * math.sqrt(math.log(N)/n_i)
@@ -214,22 +218,42 @@ def playoutRepeat(board):
     plays = plays + 1
   return (wwins/plays)
 
+def get_network_move(c):
+  c.networkInput()
+  moves = clf.predict_proba([c.inputs])[0]
+  l = dict()
+  for i in range(len(moves)):
+    l[moves[i]] = clf.classes_[i]
+  for k in sorted(l,reverse = True):
+    m = decode_move(l[k])
+    try:
+      m = chess.Move.from_uci(m)
+    except:
+      continue
+    if m in c.board.legal_moves:
+      yield (m, k)
+
 if __name__ == '__main__':
   c = chessboard.Chessboard()
-  c.move_uci("e2e4")
-  c.move_uci("d7d5")
-  c.move_uci("e4d5")
-  c.move_uci("d8d5")
-  c.move_uci("b1c3")
-  c.move_uci("e8d7")
-  c.move_uci("c3d5")
-  print(c.board.fen())
-  c.board.pop()
-  print(c.board.fen())
-  #print(playoutRepeat(c))
+  c.networkInput()
+  print(val_clf.classes_)
+  print(val_clf.predict_proba([c.inputs]))
+  c.move_uci('e2e4')
+  c.move_uci('e7e5')
+  c.move_uci('f1c4')
+  c.move_uci('d7d6')
+  c.move_uci('d1f3')
+  c.move_uci('a7a6')
+  c.move_uci('f3e3')
+  c.networkInput()
+  print(val_clf.predict_proba([c.inputs]))
+  '''
+  for move, i in get_network_move(c):
+    print(move)
 
-  '''c = chessboard.Chessboard()
   ai = AI(c)
-  for i in range(0, 100):
-    print(ai.monteCarlo().move)'''
-
+  while not c.board.is_game_over():
+    r = ai.monteCarlo()
+    c.move_uci(r.move.uci())
+    print(c)
+  '''
