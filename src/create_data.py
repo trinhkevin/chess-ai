@@ -26,6 +26,16 @@ def create_data():
       games.append(c)
   return games
 
+def create_val_data():
+  games = []
+  with open(INFILE) as file:
+    next(file)
+    for line in file:
+      c = chessboard.Chessboard()
+      for move in line.split(",")[12].split(" "):
+        c.move(move)
+      games.append((c, -1 if line.split(",")[6] == 'black' else 1 if line.split(",")[6] == 'white' else 0))
+  return games
 # Writes game object (in json) to file
 def write_data(data):
 	with open(OUTFILE, 'wb') as file:
@@ -36,11 +46,10 @@ def load_data():
     return pickle.load(file)
 
 # Main Execution
-'''
+
 if __name__ == '__main__':
   
-  games = create_data()
+  games = create_val_data()
   write_data(games)
 
   print(load_data())
-  '''
