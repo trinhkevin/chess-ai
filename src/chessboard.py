@@ -117,17 +117,31 @@ class Chessboard(object):
               self.inputs[index] = 0
           index = index + 1
 
-    # White castling
-    self.inputs[index] = self.board.has_kingside_castling_rights(chess.WHITE)
-    index += 1
-    self.inputs[index] = self.board.has_queenside_castling_rights(chess.WHITE)
-    index += 1
+    if self.board.turn:
+      # White castling
+      self.inputs[index] = self.board.has_kingside_castling_rights(chess.WHITE)
+      index += 1
+      self.inputs[index] = self.board.has_queenside_castling_rights(chess.WHITE)
+      index += 1
 
-    # Black castling
-    self.inputs[index] = self.board.has_kingside_castling_rights(chess.BLACK)
-    index += 1
-    self.inputs[index] = self.board.has_queenside_castling_rights(chess.BLACK)
-    index += 1
+      # Black castling
+      self.inputs[index] = self.board.has_kingside_castling_rights(chess.BLACK)
+      index += 1
+      self.inputs[index] = self.board.has_queenside_castling_rights(chess.BLACK)
+      index += 1
+    else:
+       # Black castling
+      self.inputs[index] = self.board.has_kingside_castling_rights(chess.BLACK)
+      index += 1
+      self.inputs[index] = self.board.has_queenside_castling_rights(chess.BLACK)
+      index += 1
+
+      # White castling
+      self.inputs[index] = self.board.has_kingside_castling_rights(chess.WHITE)
+      index += 1
+      self.inputs[index] = self.board.has_queenside_castling_rights(chess.WHITE)
+      index += 1
+
     
     # Turns since last capture or pawn move
     for i in range(0, 100):

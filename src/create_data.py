@@ -11,8 +11,10 @@ import json
 import chessboard
 import pickle
 
+INFILEVAL = '../data/data_uci.pgn'
 INFILE = '../data/games.csv'
 OUTFILE = '../data/games.json'
+STOCKFISH = '../data/stockfish.csv'
 
 # Creates games object containing all the games
 def create_data():
@@ -28,14 +30,29 @@ def create_data():
 
 def create_val_data():
   games = []
-  with open(INFILE) as file:
+  gevals = []
+  with open(INFILEVAL) as file:
     next(file)
     for line in file:
+      if (line.strip() == '' or line[0] == '['):
+        continue
       c = chessboard.Chessboard()
-      for move in line.split(",")[12].split(" "):
-        c.move(move)
-      games.append((c, -1 if line.split(",")[6] == 'black' else 1 if line.split(",")[6] == 'white' else 0))
-  return games
+      for move in line.split(" "):
+        if move[0] == '1' or move[0] == '0':
+          continue
+        c.move_uci(move.lower())
+      games.append(c)
+  with open(STOCKFISH) as file:
+    next(file)
+    for line in file:
+      evals = []
+      for e in line.split(',')[1].split(' '):
+        try:
+          evals.append(int(e))
+        except:
+          evals.append(None)
+      gevals.append(evals)
+  return (games, gevals)
 
 # Writes game object (in json) to file
 def write_data(data):

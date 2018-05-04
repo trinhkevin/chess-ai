@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 
 from sklearn.neural_network import MLPClassifier
+from sklearn.neural_network import MLPRegressor
 from create_data import load_data
 import chessboard
 import chess
 import pickle
 import warnings
+import sys
+import random
+import logging
+
+
 
 def square_value(square):
 	return ord(square[0]) - ord('a') + (int(square[1]) - 1) * 8
@@ -138,19 +144,35 @@ def train():
 	
 def train_value():
 	warnings.filterwarnings(action='ignore', category=DeprecationWarning)
-	clf = MLPClassifier(solver='sgd', alpha=1e-5, hidden_layer_sizes=(900,450,100), random_state=1, verbose = 1)
+	logging.basicConfig(
+            format="%(message)s",
+            level=logging.DEBUG,
+            stream=sys.stdout)
+	clf = MLPClassifier(solver='sgd', alpha=1e-5, learning_rate_init = 0.1,hidden_layer_sizes=(900,450), random_state=1, verbose = True)
 	inputs = None
 	classes = None
-	with open('netinputs.pkl' , 'rb') as file:
+	with open('net_inputs.pkl' , 'rb') as file:
 	  inputs = pickle.load(file)
-	with open('netclasses.pkl', 'rb') as file:
+	with open('net_values.pkl', 'rb') as file:
 	  classes = pickle.load(file)
+
+	classes = [1 if x > 100 else -1 if x < -100 else 0 for x in classes]
+	print(classes)
+
 
 	if(len(inputs) != len(classes)):
 	  exit()
 	print("training")
 
-	clf.fit(inputs, classes)
+
+
+	l = list(zip(inputs,classes))
+
+	s = random.sample(l, 10000)
+
+	insub = [x[0] for x in s]
+	classub = [x[1] for x in s]
+	clf.fit(insub, classub)
 	
 	with open('network_val.pkl' , 'wb') as file:
 	  pickle.dump(clf, file)
@@ -158,27 +180,42 @@ def train_value():
 
 def format_value():
 	try:
-		games = load_data()
+		games, gevals = load_data()
 	except:
 		print("Couldn't load data")
 
+	print(games)
+	print(gevals)
 	print("Data loaded!")
+	
 	inputs = list()
-	classification = list()
+	value = list()
 
-	for game, result in games:
-		game.networkInput()
-		inputs.append( game.inputs )
-		classification.append(result)
-	print(inputs)
-	print(classification)
+	i = 0
+	for game,evals in zip(games,gevals):
+		print(str(i) + " / " + str(len(games)))
+		m = 0
+		while len(game.board.move_stack):
+			game.networkInput()
+			if( len(evals) and evals[len(evals) - m - 1] is not None):
+				inputs.append(game.inputs)
+				value.append(evals[len(evals) - m - 1] if game.board.turn else (-1 * evals[len(evals) - m - 1]))
+			game.board.pop()	
+			m = m + 1
+		i = i + 1
 
-	with open('netinputs.pkl', 'wb') as file:
+	with open('net_inputs.pkl', 'wb') as file:
 		pickle.dump(inputs, file)
-	with open('netclasses.pkl', 'wb') as file:
-		pickle.dump(classification, file)
+	with open('net_values.pkl', 'wb') as file:
+		pickle.dump(value, file)
+
+
+	#print(inputs)
+	print(value)
+
 
 	print("Files written")
+	
 
 def formatData():
 	try:
@@ -211,4 +248,4 @@ def formatData():
 	print("Files written")
 
 if __name__ == '__main__':
-  train()
+  train_value()

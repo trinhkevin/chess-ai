@@ -19,7 +19,7 @@ from chess_network import *
 
 DATAFILE = '../data/games.json'
 C = 1
-ITERATIONS = 500
+ITERATIONS = 200
 clf = None
 val_clf = None
 
@@ -28,20 +28,39 @@ with open('network_val.pkl', 'rb') as file:
 with open('network.pkl' , 'rb') as file:
   clf = pickle.load(file)
 
+pieces = ['p', 'b','n','r','q']
+values = [1 , 3, 3, 5, 9]
 class AI:
 
   def __init__(self, board):
     self.tree = StateNode(board)
 
-  def monteCarlo(self):
+  def monteCarlo(self, board):
+    self.tree = StateNode(board)
     for i in range(ITERATIONS):
-      print(i)
-      MCTS(self.tree)
+      MCTS(self.tree, network = False)
 
     result = self.tree.getBestChild()
     self.tree = result
 
     return self.tree
+
+
+class NetworkAI:
+
+  def __init__(self, board):
+    self.tree = StateNode(board)
+
+  def monteCarlo(self, board):
+    self.tree = StateNode(board)
+    for i in range(ITERATIONS):
+      MCTS(self.tree, network = True)
+
+    result = self.tree.getBestChild()
+    self.tree = result
+
+    return self.tree
+
 
 class StateNode:
 
@@ -67,13 +86,19 @@ class StateNode:
       print('Error: invalid terminal')
       exit(1)
 
-  def createChildren(self):
+  def createNetworkChildren(self):
     for m, k in get_network_move(self.board):
       board = copy.deepcopy(self.board)
       board.move_uci(m.uci())
       child = StateNode(board, m, k)
       self.children.add(child)
 
+  def createChildren(self):
+     for move in self.board.getLegalMoves():
+      board = copy.deepcopy(self.board)
+      board.board.push(move)
+      child = StateNode(board, move)
+      self.children.add(child)
   def getBestChild(self):
     '''
     # If there are no possible children,
@@ -95,7 +120,7 @@ class StateNode:
     # Else, find the best child
     bestChild = None
     for child in self.children:
-      if bestChild is None or child.value  > bestChild.value:
+      if bestChild is None or child.value/child.visits  > bestChild.value/bestChild.visits:
         bestChild = child;
     return bestChild
 
@@ -115,15 +140,8 @@ class StateNode:
       captures = list()
       legalMoves = list()
       for move in testBoard.legal_moves:
-        if(testBoard.is_capture(move)):
-          captures.append(move)
-        else:
           legalMoves.append(move)
-
-      if(len(captures)):
-        move = captures[random.randint(0, len(captures) - 1)]
-      else:
-        move = legalMoves[random.randint(0, len(legalMoves) - 1)]
+      move = legalMoves[random.randint(0, len(legalMoves) - 1)]
 
       '''   
       moveIndex = random.randint(0, - 1)
@@ -136,6 +154,10 @@ class StateNode:
         index += 1
       '''
       testBoard.push(move)
+      mat = countBoardMaterial(testBoard)
+      if abs(mat) >= 9:
+        return -1 if mat < 0 else 1
+
     if testBoard.is_stalemate():
       return 0
     elif testBoard.is_game_over():
@@ -167,12 +189,35 @@ def monteCarlo(chessboard):
     MCTS(root)
   return root.getBestChild()
 
-def MCTS(state):
+def countMaterial(chessboard):
+  s = chessboard.board.board_fen()
+  result = 0
+
+  for c in s:
+    if c in pieces:
+      result -= values[pieces.index(c)]
+    elif c.lower() in pieces:
+      result += values[pieces.index(c.lower())]
+  return result
+def countBoardMaterial(board):
+  s = board.board_fen()
+  result = 0
+
+  for c in s:
+    if c in pieces:
+      result -= values[pieces.index(c)]
+    elif c.lower() in pieces:
+      result += values[pieces.index(c.lower())]
+  return result
+def MCTS(state, network = True):
   if state.isTerminal():
     return state.terminalValue()
   state.visits += 1
   if len(state.children) == 0:
-    state.createChildren()
+    if(network):
+      state.createNetworkChildren()
+    else:
+      state.createChildren()
   for child in state.children:
     if child.visits == 0:
       child.visits = 1
@@ -236,24 +281,17 @@ def get_network_move(c):
 if __name__ == '__main__':
   c = chessboard.Chessboard()
   c.networkInput()
-  print(val_clf.classes_)
-  print(val_clf.predict_proba([c.inputs]))
-  c.move_uci('e2e4')
-  c.move_uci('e7e5')
-  c.move_uci('f1c4')
-  c.move_uci('d7d6')
-  c.move_uci('d1f3')
-  c.move_uci('a7a6')
-  c.move_uci('f3e3')
-  c.networkInput()
-  print(val_clf.predict_proba([c.inputs]))
-  '''
-  for move, i in get_network_move(c):
-    print(move)
 
-  ai = AI(c)
+
+  ai2 = NetworkAI(c)
+  ai1 = AI(c)
+
   while not c.board.is_game_over():
-    r = ai.monteCarlo()
+    if(c.board.turn):
+      r = ai1.monteCarlo(c)
+    else:
+      r = ai2.monteCarlo(c)
+
+    print(r.move.uci())
     c.move_uci(r.move.uci())
     print(c)
-  '''
